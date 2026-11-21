@@ -13,10 +13,9 @@ DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY") or ("dev-only-insecure-key" if DEBUG else None)
 if not SECRET_KEY:
     raise RuntimeError("Set DJANGO_SECRET_KEY in .env")
-ALLOWED_HOSTS = os.environ.get(
-    "ALLOWED_HOSTS",
-    "localhost,127.0.0.1"
-).split(",")
+ALLOWED_HOSTS = [h.strip().replace("https://", "").replace("http://", "").strip("/") for h in os.environ.get("ALLOWED_HOSTS", "*").split(",") if h.strip()]
+if os.environ.get("RENDER_EXTERNAL_HOSTNAME") and "*" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(os.environ["RENDER_EXTERNAL_HOSTNAME"])
 INSTALLED_APPS = [
     "django.contrib.auth", "django.contrib.contenttypes", "django.contrib.sessions", "django.contrib.messages", "django.contrib.staticfiles",
     "corsheaders", "rest_framework", "core", APP_NAME,
