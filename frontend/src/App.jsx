@@ -5,7 +5,10 @@ import { canSee, firstPath } from "./lib/access";
 import AppShell from "./components/layout/AppShell";
 import LoginPage from "./modules/auth/LoginPage";
 
-const Dash = lazy(() => import("./modules/dashboard/LmsDashboard"));
+const AdminDash = lazy(() => import("./modules/dashboard/LmsDashboard"));
+const StudentDash = lazy(() => import("./modules/dashboard/StudentDashboard"));
+const TrainerDash = lazy(() => import("./modules/dashboard/TrainerDashboard"));
+const MyAttendance = lazy(() => import("./modules/lms/MyAttendance"));
 const Students = lazy(() => import("./modules/lms/Students"));
 const Staff = lazy(() => import("./modules/lms/Staff"));
 const Courses = lazy(() => import("./modules/lms/Courses"));
@@ -28,6 +31,9 @@ const Settings = lazy(() => import("./modules/general/Settings"));
 // A screen opens only if the user's level allows it (the API enforces the same rule)
 const Allow = ({ k, children }) => { const { user } = useAuth(); if (canSee(user, k)) return children; const to = firstPath(user); return to ? <Navigate to={to} replace /> : <p className="p-10 text-center text-slate-500">No screens assigned to your user level. Ask the administrator.</p>; };
 const Guard = () => { const { user, ready } = useAuth(); if (!ready) return <p className="p-10 text-center text-slate-500">Loading...</p>; return user ? <AppShell /> : <Navigate to="/login" replace />; };
+// Same screens, different home / attendance page depending on the kind of login
+const Dash = () => { const { user } = useAuth(); return user.kind === "student" ? <StudentDash /> : user.kind === "trainer" ? <TrainerDash /> : <AdminDash />; };
+const AttendanceByRole = () => { const { user } = useAuth(); return user.kind === "student" ? <MyAttendance /> : <Attendance />; };
 const R = ({ k, el: El }) => <Allow k={k}><El /></Allow>;
 export default function App() {
   return (
@@ -39,7 +45,7 @@ export default function App() {
           <Route path="students" element={<R k="students" el={Students} />} /><Route path="staff" element={<R k="staff" el={Staff} />} />
           <Route path="courses" element={<R k="courses" el={Courses} />} /><Route path="courses/:id/syllabus" element={<R k="courses" el={Syllabus} />} />
           <Route path="batches" element={<R k="batches" el={Batches} />} /><Route path="enrollment" element={<R k="enrollment" el={Enrollment} />} />
-          <Route path="schedule" element={<R k="schedule" el={Schedule} />} /><Route path="attendance" element={<R k="attendance" el={Attendance} />} />
+          <Route path="schedule" element={<R k="schedule" el={Schedule} />} /><Route path="attendance" element={<R k="attendance" el={AttendanceByRole} />} />
           <Route path="assignments" element={<R k="assignments" el={Assignments} />} /><Route path="assessments" element={<R k="assessments" el={Assessments} />} /><Route path="materials" element={<R k="materials" el={Materials} />} />
           <Route path="fees" element={<R k="fees" el={Fees} />} /><Route path="certificates" element={<R k="certificates" el={Certificates} />} />
           <Route path="announcements" element={<R k="announcements" el={Announcements} />} /><Route path="reports" element={<R k="reports" el={Reports} />} />

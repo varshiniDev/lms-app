@@ -17,6 +17,16 @@ def role_name(user):
     return "Administrator" if user.is_superuser else (p.role.name if p and p.role else "No level")
 
 
+def role_kind(user):
+    p = getattr(user, "profile", None)
+    return p.role.kind if p and p.role else "custom"
+
+
+def linked_of(user):
+    p = getattr(user, "profile", None)
+    return p.linked_id if p else None
+
+
 def perms_of(user):
     """{screen: [actions]} for this login."""
     if is_admin(user):
@@ -49,7 +59,9 @@ class ScreenPermission(BasePermission):
             return True
         if request.method in SAFE_METHODS:
             if getattr(view, "lookup", False):
-                return True
+                return True  # dropdown data (portal logins only ever receive their own, already-scoped rows)
+            if role_kind(u) in ("trainer", "student"):
+                return False  # portal logins get only what their level lists explicitly
             if any("view" in perms.get(s, []) for s in _t(getattr(view, "read_screens", ()))):
                 return True
             if "view" in perms.get("dashboard", []) or "view" in perms.get("reports", []):

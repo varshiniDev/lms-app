@@ -10,5 +10,6 @@ export const can = (user, screen, action = "view") => {
   return (user.permissions?.[screen] || []).includes(action);
 };
 export const canSee = (user, key) => can(user, key, "view");
-export const visibleNav = (user) => NAV.map((g) => ({ ...g, items: g.items.filter((i) => canSee(user, i.key)) })).filter((g) => g.items.length);
+// Portal logins (student / trainer) can get friendlier menu names via `labels: { student: "My classes" }` in navigation.js
+export const visibleNav = (user) => NAV.map((g) => ({ ...g, items: g.items.filter((i) => canSee(user, i.key)).map((i) => ({ ...i, label: i.labels?.[user?.kind] || i.label })) })).filter((g) => g.items.length);
 export const firstPath = (user) => visibleNav(user)[0]?.items[0]?.to || null;

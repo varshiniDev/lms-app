@@ -20,6 +20,8 @@ def bootstrap_admin(sender, **kwargs):
         user = User.objects.create_superuser(username=username, password=password, first_name="Varshini Shan")
         print(f"[core] Admin '{username}' created. Change ADMIN_PASSWORD in .env for production.")
     Profile.objects.update_or_create(user=user, defaults={"role": role})
+    for spec in getattr(settings, "SYSTEM_ROLES", []):  # built-in portal levels (e.g. Trainer, Student) - permissions refreshed on every migrate
+        Role.objects.update_or_create(name=spec["name"], defaults={"kind": spec["kind"], "description": spec["description"], "permissions": spec["permissions"], "is_system": False})
 
 
 class CoreConfig(AppConfig):

@@ -2,10 +2,12 @@ import { Layers, Radio, CalendarClock, Users } from "lucide-react";
 import EntityPage from "../../components/common/EntityPage";
 import Badge from "../../components/common/Badge";
 import { useDb, useLookup } from "../../hooks/useDb";
+import { useAuth } from "../../context/AuthContext";
 import { BATCH_MODES, DAYS } from "../../config/constants";
 import { fmtDate, todayISO } from "../../lib/format";
 
 export default function Batches() {
+  const { user } = useAuth();
   const db = useDb(); const courses = useLookup("courses"); const staff = useLookup("staff");
   const enrolled = (b) => db.enrollments.filter((e) => e.batchId === b.id && e.status === "Active").length;
   const columns = [
@@ -28,6 +30,6 @@ export default function Batches() {
     { label: "Batches", value: rows.length, icon: Layers, tone: "blue" }, { label: "Running", value: rows.filter((r) => r.status === "Active").length, icon: Radio, tone: "green" },
     { label: "Upcoming", value: rows.filter((r) => r.status === "Upcoming").length, icon: CalendarClock, tone: "yellow" }, { label: "Seats filled", value: `${rows.reduce((a, b) => a + enrolled(b), 0)}/${rows.reduce((a, b) => a + b.capacity, 0)}`, icon: Users, tone: "purple" },
   ];
-  return <EntityPage title="Batches" subtitle="Schedules, trainers and seat capacity" singular="Batch" collection="batches" columns={columns} fields={fields} stats={stats} filters={[{ key: "status", label: "Status", options: ["Upcoming", "Active", "Completed"] }, { key: "mode", label: "Mode", options: BATCH_MODES }]}
+  return <EntityPage title="Batches" subtitle="Schedules, trainers and seat capacity" singular="Batch" collection="batches" columns={user?.kind === "student" ? columns.filter((c) => c.key !== "seats") : columns} fields={fields} stats={stats} filters={[{ key: "status", label: "Status", options: ["Upcoming", "Active", "Completed"] }, { key: "mode", label: "Mode", options: BATCH_MODES }]}
     defaults={{ status: "Upcoming", capacity: 30, mode: "Online", days: DAYS[0], startTime: "10:00", endTime: "11:30", startDate: todayISO() }} />;
 }

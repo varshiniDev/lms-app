@@ -34,6 +34,16 @@ Log in as the administrator, then use the **Admin** menu:
 - Dropdown lists (for example account or course lists) are readable by every login so forms work. Dashboard / Reports access also allows reading the underlying numbers (read-only).
 - Screen keys: dashboard, students, staff (Instructors), courses, batches, enrollment, schedule, attendance, assignments, assessments, materials, fees, certificates, announcements, reports.
 
+## 4. Student and Trainer logins (portals)
+Besides admin and custom staff levels, the LMS has two **built-in levels**: **Trainer** and **Student**. They are created automatically by `migrate` and cannot be edited or deleted.
+- **Give someone a login:** open **Students** or **Instructors** and click the key icon on the row (*Create student login* / *Create trainer login*), choose a username and password. (Or use **Admin -> Users**, pick the level *Student* or *Trainer* and the matching student / instructor.) Each student or instructor can have one login.
+- **Student portal** - a student sees only their own data: personal dashboard (attendance, upcoming classes with join links, assignments due, results, fee balance, certificates), My courses and syllabus, My batches, My classes, My attendance, My assignments, My results, Study materials, My fees, My certificates (PDF download) and Announcements. Read-only.
+- **Trainer portal** - a trainer sees only the batches they teach and those batches' students: dashboard (classes, attendance trends, low-attendance students), My students, My batches, Mark attendance, class schedule (add/edit own classes), assignments, results & grading, study materials. Trainers cannot see fees, certificates, other trainers' batches, or admin screens.
+- **Enforced on the server:** the API itself only returns the logged-in person's rows and refuses writes outside their own batches/courses (HTTP 403/404), so it cannot be bypassed by typing URLs.
+- Everyone (including students and trainers) can change their own password in **Settings -> Change my password**. Admin can reset any password or disable a login on the Users screen.
+- Announcements reach portal users by audience: *Everyone*, *Students* (students only) or *Staff* (trainers only).
+- **Updating an existing deployment:** deploy the new code and run `python manage.py migrate` (it adds two columns and creates the Trainer and Student levels). Existing data and logins are untouched.
+
 ## Database
 Default is SQLite (no setup). For **MySQL**:
 1. Create the database and a user:

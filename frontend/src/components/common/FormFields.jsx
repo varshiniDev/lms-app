@@ -4,7 +4,7 @@ export default function FormFields({ fields, values, onChange, errors = {} }) {
   const opt = (o) => (typeof o === "object" ? o : { value: o, label: o });
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      {fields.map((f) => (
+      {fields.filter((f) => !f.showIf || f.showIf(values)).map((f) => (
         <div key={f.key} className={f.full || f.type === "textarea" ? "sm:col-span-2" : ""}>
           <label className="label">{f.label}{f.required && <span className="text-red-500"> *</span>}</label>
           {f.type === "matrix" ? <PermissionMatrix screens={f.options} value={values[f.key] || {}} onChange={(v) => onChange(f.key, v)} />

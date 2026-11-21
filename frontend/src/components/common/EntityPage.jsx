@@ -21,7 +21,7 @@ import FormFields from "./FormFields";
  *  defaults    initial "Add" values           prepare(values,isNew,allRows) -> values to send
  *  onSaved(rec,isNew)   rowActions(row) -> extra buttons
  */
-export default function EntityPage({ title, subtitle, singular, collection, columns, fields, stats, filters = [], baseFilter, defaults = {}, prepare, onSaved, rowActions, canAdd = true, canEdit = true, canDelete = true, screen, rowEditable, rowDeletable, importFields, headerExtra, above, searchPlaceholder, exportName }) {
+export default function EntityPage({ title, subtitle, singular, collection, columns, fields, stats, filters = [], baseFilter, defaults = {}, prepare, onSaved, rowActions, canAdd = true, canEdit = true, canDelete = true, screen, rowEditable, rowDeletable, importFields, toForm, headerExtra, above, searchPlaceholder, exportName }) {
   const all = useDb()[collection]; const toast = useToast(); const { user } = useAuth(); const sc = screen || collection;
   canAdd = canAdd && can(user, sc, "add"); canEdit = canEdit && can(user, sc, "edit"); canDelete = canDelete && can(user, sc, "delete");
   const scoped = baseFilter ? all.filter(baseFilter) : all;
@@ -30,7 +30,7 @@ export default function EntityPage({ title, subtitle, singular, collection, colu
   const [modal, setModal] = useState(null); const [values, setValues] = useState({}); const [errors, setErrors] = useState({}); const [busy, setBusy] = useState(false);
   const noun = singular || title.replace(/s$/, ""); const close = () => setModal(null);
   const openAdd = () => { setValues({ ...defaults }); setErrors({}); setModal({ mode: "add" }); };
-  const openEdit = (row) => { setValues({ ...row }); setErrors({}); setModal({ mode: "edit", row }); };
+  const openEdit = (row) => { setValues(toForm ? toForm({ ...row }) : { ...row }); setErrors({}); setModal({ mode: "edit", row }); };
   const submit = async (e) => {
     e.preventDefault(); const er = {};
     fields.forEach((f) => { if (f.required && (values[f.key] === "" || values[f.key] == null)) er[f.key] = "Required"; });

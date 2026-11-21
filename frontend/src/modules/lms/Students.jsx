@@ -1,4 +1,7 @@
-import { GraduationCap, UserCheck, Award, UserX } from "lucide-react";
+import { useState } from "react";
+import { GraduationCap, UserCheck, Award, UserX, KeyRound } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import CreateLoginModal from "./CreateLoginModal";
 import EntityPage from "../../components/common/EntityPage";
 import Badge from "../../components/common/Badge";
 import { PersonCell } from "../../components/common/Avatar";
@@ -7,7 +10,8 @@ import { studentAtt } from "../../lib/metrics";
 import { todayISO } from "../../lib/format";
 
 export default function Students() {
-  const db = useDb(); const batches = useLookup("batches"); const courses = useLookup("courses");
+  const db = useDb(); const { user } = useAuth(); const [lg, setLg] = useState(null); const loginOf = (id) => db.users.find((u) => u.roleKind === "student" && u.linkedId === id);
+  const batches = useLookup("batches"); const courses = useLookup("courses");
   const info = (id) => { const e = db.enrollments.find((x) => x.studentId === id && x.status === "Active"); const b = e && batches.get(e.batchId); return { batch: b?.name || "-", course: b ? courses.get(b.courseId)?.name : "-" }; };
   const feeStatus = (id) => { const f = db.fees.filter((x) => x.studentId === id); if (!f.length) return "-"; return f.every((x) => x.status === "Paid") ? "Paid" : f.some((x) => x.paid > 0) ? "Partial" : "Pending"; };
   const columns = [
@@ -16,7 +20,8 @@ export default function Students() {
     { key: "phone", label: "Phone", hide: "md" }, { key: "city", label: "City", hide: "lg" },
     { key: "batch", label: "Batch", render: (r) => info(r.id).batch, export: (r) => info(r.id).batch }, { key: "course", label: "Course", hide: "md", render: (r) => info(r.id).course, export: (r) => info(r.id).course },
     { key: "att", label: "Attendance", render: (r) => { const s = studentAtt(db.attendance, r.id); return s.total ? <b className={s.pct < 75 ? "text-red-600" : "text-emerald-600"}>{s.pct}%</b> : "-"; }, export: (r) => `${studentAtt(db.attendance, r.id).pct}%`, sort: (r) => studentAtt(db.attendance, r.id).pct },
-    { key: "fees", label: "Fees", hide: "md", render: (r) => (feeStatus(r.id) === "-" ? "-" : <Badge>{feeStatus(r.id)}</Badge>), export: (r) => feeStatus(r.id) },
+    ...(user?.kind === "trainer" ? [] : [{ key: "fees", label: "Fees", hide: "md", render: (r) => (feeStatus(r.id) === "-" ? "-" : <Badge>{feeStatus(r.id)}</Badge>), export: (r) => feeStatus(r.id) }]),
+    ...(user?.isAdmin ? [{ key: "login", label: "Portal login", hide: "lg", render: (r) => (loginOf(r.id) ? <Badge tone="purple">@{loginOf(r.id).username}</Badge> : "-"), export: (r) => loginOf(r.id)?.username || "" }] : []),
     { key: "status", label: "Status", render: (r) => <Badge>{r.status}</Badge> },
   ];
   const fields = [
@@ -27,6 +32,10 @@ export default function Students() {
     { label: "Students", value: rows.length, icon: GraduationCap, tone: "blue" }, { label: "Active", value: rows.filter((r) => r.status === "Active").length, icon: UserCheck, tone: "green" },
     { label: "Completed", value: rows.filter((r) => r.status === "Completed").length, icon: Award, tone: "purple" }, { label: "Dropped", value: rows.filter((r) => r.status === "Dropped").length, icon: UserX, tone: "red" },
   ];
-  return <EntityPage title="Students" subtitle="Admit learners, track their batch, attendance and fees" singular="Student" collection="students" columns={columns} fields={fields} stats={stats} importFields={["name", "phone", "email", "city", "guardian"]}
-    filters={[{ key: "status", label: "Status", options: ["Active", "Completed", "Dropped"] }]} defaults={{ status: "Active", joinedOn: todayISO() }} />;
+  return (<>
+    <EntityPage title="Students" subtitle="Admit learners, track their batch, attendance and fees" singular="Student" collection="students" columns={columns} fields={fields} stats={stats} importFields={["name", "phone", "email", "city", "guardian"]}
+    filters={[{ key: "status", label: "Status", options: ["Active", "Completed", "Dropped"] }]} defaults={{ status: "Active", joinedOn: todayISO() }}
+      rowActions={(r) => (user?.isAdmin && !loginOf(r.id) ? [{ icon: KeyRound, title: "Create student login", cls: "text-purple-600", onClick: setLg }] : [])} />
+    {lg && <CreateLoginModal kind="student" record={lg} onClose={() => setLg(null)} />}
+  </>);
 }
